@@ -20,6 +20,17 @@ class TransactionsImport implements SkipsOnError, ToModel, WithHeadingRow, WithV
     {
         Log::info('Processing row: '.json_encode($row));
 
+        // Check if the row is effectively empty (at least one of date, description, or amount should be present)
+        if (empty(array_filter([
+            $row['date'] ?? null,
+            $row['description'] ?? null,
+            $row['amount'] ?? null,
+        ]))) {
+            Log::info('Empty row found, skipping: '.json_encode($row));
+
+            return null;
+        }
+
         // Check for duplicates based on date, description, and amount
         $existing = Transaction::where('date', $row['date'] ?? null)
             ->where('description', $row['description'] ?? null)

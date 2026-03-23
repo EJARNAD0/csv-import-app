@@ -13,9 +13,24 @@ class TransactionsImport implements SkipsOnError, ToModel, WithHeadingRow, WithV
 {
     use SkipsErrors;
 
+    private $rowCount = 0;
+
     public function model(array $row)
     {
-        return new Transaction([
+        \Log::info('Processing row: ' . json_encode($row));
+
+        // Check for duplicates based on date, description, and amount
+        $existing = Transaction::where('date', $row['date'] ?? null)
+            ->where('description', $row['description'] ?? null)
+            ->where('amount', $row['amount'] ?? null)
+            ->first();
+
+        if ($existing) {
+            \Log::info('Duplicate transaction found, skipping: ' . json_encode($row));
+            return null; // Skip duplicate
+        }
+
+        $transaction = new Transaction([
             'date' => $row['date'] ?? null,
             'description' => $row['description'] ?? null,
             'amount' => $row['amount'] ?? null,
@@ -25,12 +40,22 @@ class TransactionsImport implements SkipsOnError, ToModel, WithHeadingRow, WithV
             'source' => $row['source'] ?? null,
             'status' => $row['status'] ?? null,
         ]);
+
+        $this->rowCount++;
+        \Log::info('Created transaction: ' . $transaction->description);
+
+        return $transaction;
+    }
+
+    public function getRowCount()
+    {
+        return $this->rowCount;
     }
 
     public function rules(): array
     {
         return [
-            '*.email' => 'required|email|unique:transactions,email',
+            // Add validation rules for your fields if needed
         ];
     }
 }

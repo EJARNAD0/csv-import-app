@@ -1,0 +1,3 @@
+date,description,amount,business,category,transaction_type,source,status
+2024-01-01,Test transaction 1,100.00,Test Business,Food,Debit,Bank,Completed
+2024-01-02,Test transaction 2,50.00,Another Business,Transport,Credit,Card,Pending

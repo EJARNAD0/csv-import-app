@@ -3,6 +3,7 @@
 namespace App\Imports;
 
 use App\Models\Transaction;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\ToModel;
@@ -17,7 +18,7 @@ class TransactionsImport implements SkipsOnError, ToModel, WithHeadingRow, WithV
 
     public function model(array $row)
     {
-        \Log::info('Processing row: ' . json_encode($row));
+        Log::info('Processing row: '.json_encode($row));
 
         // Check for duplicates based on date, description, and amount
         $existing = Transaction::where('date', $row['date'] ?? null)
@@ -26,7 +27,8 @@ class TransactionsImport implements SkipsOnError, ToModel, WithHeadingRow, WithV
             ->first();
 
         if ($existing) {
-            \Log::info('Duplicate transaction found, skipping: ' . json_encode($row));
+            Log::info('Duplicate transaction found, skipping: '.json_encode($row));
+
             return null; // Skip duplicate
         }
 
@@ -42,7 +44,7 @@ class TransactionsImport implements SkipsOnError, ToModel, WithHeadingRow, WithV
         ]);
 
         $this->rowCount++;
-        \Log::info('Created transaction: ' . $transaction->description);
+        Log::info('Created transaction: '.$transaction->description);
 
         return $transaction;
     }

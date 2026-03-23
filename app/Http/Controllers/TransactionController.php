@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Imports\TransactionsImport;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 
 class TransactionController extends Controller
@@ -26,36 +27,37 @@ class TransactionController extends Controller
 
     public function upload(Request $request)
     {
-        \Log::info('Upload method called', [
+        Log::info('Upload method called', [
             'has_file' => $request->hasFile('file'),
             'all_files' => $request->allFiles(),
-            'all_data' => $request->all()
+            'all_data' => $request->all(),
         ]);
 
         $request->validate([
             'file' => 'required|file',
         ]);
 
-        \Log::info('Validation passed');
+        Log::info('Validation passed');
 
         $file = $request->file('file');
 
-        \Log::info('File info', [
+        Log::info('File info', [
             'original_name' => $file->getClientOriginalName(),
             'mime_type' => $file->getMimeType(),
             'size' => $file->getSize(),
-            'path' => $file->getPathname()
+            'path' => $file->getPathname(),
         ]);
 
         if ($file->getSize() == 0) {
-            \Log::info('File is empty');
+            Log::info('File is empty');
+
             return back()->withErrors(['file' => 'File is empty']);
         }
 
-        \Log::info('File size: ' . $file->getSize());
+        Log::info('File size: '.$file->getSize());
 
         try {
-            \Log::info('Starting Excel import');
+            Log::info('Starting Excel import');
             $import = new TransactionsImport;
             Excel::import($import, $file);
 
@@ -64,12 +66,13 @@ class TransactionController extends Controller
                 return back()->withErrors(['file' => 'No valid data found in the CSV file.']);
             }
 
-            \Log::info('Excel import completed, rows imported: ' . $import->getRowCount());
+            Log::info('Excel import completed, rows imported: '.$import->getRowCount());
         } catch (\Exception $e) {
-            \Log::error('Import error: ' . $e->getMessage());
-            return back()->withErrors(['file' => 'Error processing file: ' . $e->getMessage()]);
+            Log::error('Import error: '.$e->getMessage());
+
+            return back()->withErrors(['file' => 'Error processing file: '.$e->getMessage()]);
         }
 
-        return back()->with('success', 'CSV uploaded successfully! ' . $import->getRowCount() . ' transactions imported.');
+        return back()->with('success', 'CSV uploaded successfully! '.$import->getRowCount().' transactions imported.');
     }
 }
